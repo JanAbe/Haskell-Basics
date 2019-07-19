@@ -74,12 +74,63 @@ length' [] = 0
 length' [x] = 1
 length' (x:xs) = 1 + length' xs
 
--- [True, True, True, True]
+-- [True, True, True, True] -> True
+-- [False, True, True, True] -> False
 and' :: [Bool] -> Bool
-and' [] = error "Not possible :("
+and' [] = True
 and' [x]
-    | x == True = True
+    | x = True
     | otherwise = False
 and' (x:xs)
-    | x == True && and' xs == True = True
+    | x && and' xs = True
     | otherwise = False
+
+-- [] -> True
+-- [1] -> False
+-- Can this be done cleaner?
+-- It feels unnecessary to pattermatch for both [x] and (x:xs)
+null' :: [a] -> Bool
+null' [] = True
+null' [x] = False
+null' (x:xs) = False
+
+-- Again, it feels unnecessary to pattermatch for both [x] and (x:xs)
+head' :: [a] -> a
+head' [] = error "head: empty list"
+head' [x] = x
+head' (x:xs) = x
+
+tail' :: [a] -> [a]
+tail' [] = error "tail: empty list"
+tail' [x] = []
+tail' (x:xs) = xs
+
+-- [False, True, False]
+or' :: [Bool] -> Bool
+or' [] = False
+or' [x]
+    | x = True
+    | otherwise = False
+or' (x:xs)
+    | x || or' xs = True
+    | otherwise = False
+
+
+-- I don't know how to do this one yet :(
+-- (++) :: [a] -> [a] -> [a]
+-- l1 ++ [] = l1
+-- [] ++ l2 = l2
+-- l1 ++ (y:ys) = error "don't know how to solve this" 
+
+
+-- map (+3) [1,2,3] -> [4,5,6]
+map' :: (a -> b) -> [a] -> [b]
+map' _ [] = []
+map' f (x:xs) = f x : map' f xs
+
+-- filter (>3) [1,2,3,4,5] -> [4,5]
+filter' :: (a -> Bool) -> [a] -> [a]
+filter' _ [] = []
+filter' p (x:xs)
+    | p x  = x : filter' p xs
+    | otherwise = filter' p xs
