@@ -1,7 +1,10 @@
 {-
 Simple functions written in haskell for educational purposes and to learn / become more comfortable with recursion
+Based on 'Learn you a Haskell' and 'Google\'s codelab'
 -}
 
+import Control.Monad        (void)
+import Text.Read            (readMaybe)
 
 -- [35,6,1,13,20,40]
 quicksort :: (Ord a) => [a] -> [a]
@@ -115,14 +118,6 @@ or' (x:xs)
     | x || or' xs = True
     | otherwise = False
 
-
--- I don't know how to do this one yet :(
--- (++) :: [a] -> [a] -> [a]
--- l1 ++ [] = l1
--- [] ++ l2 = l2
--- l1 ++ (y:ys) = error "don't know how to solve this" 
-
-
 -- map (+3) [1,2,3] -> [4,5,6]
 map' :: (a -> b) -> [a] -> [b]
 map' _ [] = []
@@ -134,3 +129,84 @@ filter' _ [] = []
 filter' p (x:xs)
     | p x  = x : filter' p xs
     | otherwise = filter' p xs
+
+-- foldl (-) 0 [1,2,3,4]   ==   (((0 - 1) - 2) - 3) - 4   ==   -10
+foldl' :: (a -> x -> a) -> a -> [x] -> a
+foldl' _ a [] = a
+foldl' f a [x] = f a x
+foldl' f a (x:xs) = foldl' f (f a x) xs
+
+-- foldr (-) 0 [1,2,3,4]   ==   1 - (2 - (3 - (4 - 0)))   ==    -2
+-- don't know how to do this one yet :c
+foldr' :: (x -> a -> a) -> a -> [x] -> a
+foldr' _ a [] = a
+foldr' f a [x] = f x a
+-- foldr' f a (x:xs) = foldr' f (f x a) xs
+
+
+-- ----------------------------------------------------------------------------
+
+-- Rock, Paper, Scissors (from google's codelab)
+-- Only the functions 'pairScore' and 'score' have been implemented by me
+-- the others were already provided 
+
+-- New Datatype with the following value constructors (Rock, paper, scissors)
+data Hand = Rock | Paper | Scissors deriving (Show, Read, Eq)
+-- Type synonym, different name for a type so it makes more sense
+type Score = (Int, Int)
+
+-- "winsOver" tells you if a hand wins over another one.  It introduces a
+-- nifty trick: any binary function can be used in an infix way if
+-- surrounded by backquotes.
+winsOver :: Hand -> Hand -> Bool
+Rock `winsOver` Scissors = True
+Paper `winsOver` Rock = True
+Scissors `winsOver` Paper = True
+_ `winsOver` _ = False
+
+computeScore :: Hand -> Hand -> Score
+computeScore h1 h2
+    | h1 `winsOver` h2 = (1, 0)
+    | h2 `winsOver` h1 = (0, 1)
+    | otherwise        = (0, 0)
+
+combine :: Score -> Score -> Score
+combine (a1, a2) (b1, b2) = (a1 + b1, a2 + b2)
+
+-- Implemented this myself, the other functions were already provided!!
+pairScore :: (Hand, Hand) -> Score
+pairScore (h1, h2) = computeScore h1 h2
+
+-- Implemented this myself, the other functions were already provided!!
+-- [Paper, Scissors, Paper, Paper]
+-- [Rock, Rock, Paper, Scissors]
+-- [(Paper, Rock), (Scissors, Rock), (Paper, Paper), (Paper, Scissors)]
+-- iterate over it, computeScore for each pair, combine each score
+score :: [Hand] -> [Hand] -> Score
+score h1 h2 = foldl combine (0, 0) $ map pairScore $ zip h1 h2
+
+-- Play up to 3
+gameOver :: Score -> Bool
+gameOver (s1, s2) = s1 >= 3 || s2 >= 3
+
+readHand :: String -> IO Hand
+readHand prompt = do
+  putStr prompt                  -- prints the prompt
+  handText <- getLine            -- reads one line of input
+  case readMaybe handText of     -- tries to convert it to Hand
+     Just h  -> return h         -- success: our result is h
+     Nothing -> readHand prompt  -- failure: we try again
+
+playTurn :: Score -> IO Score
+playTurn oldScore = do
+  h1 <- readHand "p1: "
+  h2 <- readHand "p2: "
+  let turnScore = computeScore h1 h2
+      newScore  = combine oldScore turnScore
+  print newScore
+  if gameOver newScore
+    then return   newScore
+    else playTurn newScore
+
+play :: IO ()
+play = void $ playTurn (0,0)
